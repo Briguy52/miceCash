@@ -41,7 +41,6 @@ public class Cachesim {
 		this.offsetBits = this.logBase2(this.blockSize);
 		this.indexBits = this.logBase2(this.numSets);
 		
-		Block block = new Block(this.blockSize); 
 		this.myInstructions = this.buildInstructions();
 		this.loopThroughInstructions(this.myInstructions);
 	}
@@ -56,38 +55,44 @@ public class Cachesim {
 	}
 	
 	private void execute(Instruction instr) {
-		int address = instr.getAddress();
 		
 		// TODO: refactor
-		int offset = address % this.offsetBits;
-		int index = (address >> this.offsetBits) % this.numSets;
-		int tag = (address >> (this.indexBits + this.offsetBits));
+		int tag = (instr.getAddress() >> (this.indexBits + this.offsetBits));
+		int offset = instr.getAddress() % this.offsetBits;
+		int index = (instr.getAddress() >> this.offsetBits) % this.numSets;
 		
 //		int numBytes = instr.getNumBytes();
 		String writeVal = this.padWithZeroes(instr.getWriteValue(), instr.getNumBytes() * 8);
-		String hexAddress = this.padWithZeroes(Integer.toString(address), 6);
+		String hexAddress = this.padWithZeroes(Integer.toString(instr.getAddress()), 6);
 		switch (instr.getInstrType()) {
-			case "store":  
+			case "store": this.store(index, tag, instr.getNumBytes(), instr.getAddress());
+						  break; 
+			case "load": this.load(); 
+						 break;
 		}
 		
 	}
 	
-	private void store() {
-		ArrayList<Block> set = cache.get(index);
-		if (set != null && set.contains(new Block(tag))) { // HIT
-			Block b = set.remove(set.indexOf(new Block(tag))); // block that was found
-			System.out.println("hit ");
-			// rewrite data & "refresh" cache entry by re-adding to end
-			b.writeValue(offset, numBytes, writeValue);
-			set.add(b);
+	private void load() {
+		
+	}
+	
+	private void store(int index, int tag, int numBytes, int address) {
+		List<Block> cacheSet = this.myCache.get(index);
+		if (!cacheSet.contains(new Block(tag, this.blockSize)) || cacheSet == null) { 
+			System.out.println("Awww miss");
 		}
-		else { // MISS
-			System.out.println("miss ");
+		else { 
+			System.out.println("Wooo hit!");
+			Block block = cacheSet.remove(cacheSet.indexOf(new Block(tag, this.blockSize))); 
+			// rewrite data & "refresh" cache entry by re-adding to end
+			block.writeToEnd(offset, numBytes, writeValue);
+			cacheSet.add(block);
 		}
 		// write through to main memory regardless
 			// create new bytes in mem and write to them if not present or overwrite old bytes
 			for (int i = 0; i < numBytes; i++) {
-				mainMem.put(address + i, writeValue.substring(i*8, (i+1)*8));							
+				this.myMemory.put(address + i, writeValue.substring(i*8, (i+1)*8));							
 			}
 	}
 	
