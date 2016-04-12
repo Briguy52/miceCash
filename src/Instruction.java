@@ -3,56 +3,56 @@
  */
 public class Instruction {
 
-	private String myType;
-    private String myWriteValue;
+	private String instrType;
+    private String writeVal;
 
-    private int myAddress;
-    private int myNumBytes;
+    private int address;
+    private int numBytes;
 
-    public Instruction(int address, int numBytes, String type) {
-    	this.myAddress = address;
-    	this.myNumBytes = numBytes;
-    	this.myType = type; 
-    	this.myWriteValue = ""; 
+    public Instruction(int address, int numBytes, String instrType) {
+    	this.address = address;
+    	this.numBytes = numBytes;
+    	this.instrType = instrType; 
+    	this.writeVal = ""; 
     }
 
-    public Instruction(int address, int numBytes, String type, String writeValue) {
-    	this.myAddress = address;
-    	this.myNumBytes = numBytes;
-    	this.myType = type;
-    	this.myWriteValue = writeValue;
+    public Instruction(int address, int numBytes, String instrType, String writeVal) {
+    	this.address = address;
+    	this.numBytes = numBytes;
+    	this.instrType = instrType;
+    	this.writeVal = writeVal;
     }
 
-	public String getMyType() {
-		return myType;
+	public String getInstrType() {
+		return instrType;
 	}
 
-	public void setMyType(String myType) {
-		this.myType = myType;
+	public void setInstrType(String instrType) {
+		this.instrType = instrType;
 	}
 
-	public String getMyWriteValue() {
-		return myWriteValue;
+	public String getWriteValue() {
+		return writeVal;
 	}
 
-	public void setMyWriteValue(String myWriteValue) {
-		this.myWriteValue = myWriteValue;
+	public void setWriteValue(String writeValue) {
+		this.writeVal = writeValue;
 	}
 
-	public int getMyAddress() {
-		return myAddress;
+	public int getAddress() {
+		return address;
 	}
 
-	public void setMyAddress(int myAddress) {
-		this.myAddress = myAddress;
+	public void setAddress(int address) {
+		this.address = address;
 	}
 
-	public int getMyNumBytes() {
-		return myNumBytes;
+	public int getNumBytes() {
+		return numBytes;
 	}
 
-	public void setMyNumBytes(int myNumBytes) {
-		this.myNumBytes = myNumBytes;
+	public void setNumBytes(int numBytes) {
+		this.numBytes = numBytes;
 	}
 
     

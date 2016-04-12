@@ -34,6 +34,8 @@ public class Cachesim {
 		this.indexBits = this.logBase2(this.numSets);
 		
 		Block block = new Block(this.blockSize); 
+		this.myInstructions = this.buildInstructions();
+		this.loopThroughInstructions(this.myInstructions);
 	}
 	
 	// Change of base from nat. log to 2 
@@ -41,8 +43,19 @@ public class Cachesim {
 		return (int) (Math.log(value) / Math.log(2));
 	}
 	
-	private void loopThroughInstructions() {
-		this.myInstructions = this.buildInstructions();
+	private void loopThroughInstructions(List<Instruction> instructions) {
+		instructions.stream().forEach(instr -> this.execute(instr));
+	}
+	
+	private void execute(Instruction instr) {
+		int address = inst.address;
+		int offset = address % offsetBitSize;
+		int index = (address >> offsetBitSize) % numSets;
+		int tag = (address >> (offsetBitSize + indexBitSize));
+		int numBytes = inst.numBytes;
+		String writeValueIncomplete = inst.writeValue; // possibly missing leading zeros
+		String writeValue = writeValueIncomplete;
+
 	}
 	
 	public static int kbToByte(int kb) {
