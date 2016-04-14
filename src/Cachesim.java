@@ -57,28 +57,87 @@ public class Cachesim {
 	private void execute(Instruction instr) {
 		
 		// TODO: refactor
-		int tag = (instr.getAddress() >> (this.indexBits + this.offsetBits));
-		int offset = instr.getAddress() % this.offsetBits;
-		int index = (instr.getAddress() >> this.offsetBits) % this.numSets;
+		int tag = this.parseTag(instr.getAddress()); // tag is to the 'left' of index + offset
+		int blockOffset = this.parseBlkOff(instr.getAddress());
+		int index = this.parseIndex(instr.getAddress());
 		
 //		int numBytes = instr.getNumBytes();
 		String writeVal = this.padWithZeroes(instr.getWriteValue(), instr.getNumBytes() * 8);
 		String hexAddress = this.padWithZeroes(Integer.toString(instr.getAddress()), 6);
+		CacheSet cacheSet = this.myCache.get(index);
 		switch (instr.getInstrType()) {
-			case "store": this.store(index, tag, instr.getNumBytes(), instr.getAddress());
+			case "store": this.store(cacheSet, index, tag, instr.getNumBytes(), instr.getAddress());
 						  break; 
-			case "load": this.load(); 
+			case "load": this.load(cacheSet, index, tag, instr.getNumBytes(), instr.getAddress(), blockOffset); 
 						 break;
 		}
 		
 	}
 	
-	private void load() {
-		
+	private void load(List<Block> cacheSet, int index, int tag, int numBytes, int address, int blkOff) {
+		if (!cacheSet.contains(new Block(tag, this.blockSize)) || cacheSet == null) { 
+			System.out.println("Awww miss");
+			// Begin loading in a new Block
+			Block block = new Block(tag, this.blockSize); 
+			int start = address - blkOff;
+			// Let's build a Block (byte by byte...)
+			for (int i = start; i < (this.blockSize + start); i++) {
+				String memVal = this.myMemory.get(i); 
+				if (memVal == null) { // not found
+					memVal = "00000000"; // 8 bits of 0
+				}
+				block.writeByte(memVal, blkOff + i - address);
+				if (this.needsPadding(i, address, numBytes)) {
+					String toPad = this.makeHex(memVal);
+					String afterPad = this.padWithZeroes(toPad, 2);
+					System.out.println(afterPad); // for testing
+				}
+			}
+			// Now we need to make/find a set to put this in 
+			if (cacheSet == null) {
+				// No set, make a new one
+				List<Block> set = new ArrayList<Block>();
+				set.add(block);
+				this.myCache.put(index, set);
+			}
+			else {
+				if (!this.setFull(cacheSet, this.numWays)) {
+					// LRU eviction policy
+					cacheSet.remove(0); 
+				}
+				cacheSet.add(block); 
+			}
+		}
+		else {
+			System.out.print("Woooo hit!");
+			Block block = cacheSet.remove(cacheSet.indexOf(new Block(tag, this.blockSize)));
+			cacheSet.add(block); 
+			
+			
+			Block block = cacheSet.remove(cacheSet.indexOf(new Block(tag))); // block that was found
+			set.add(b); // re-add block to refres; 
+			String value = b.readValue(blkOff, numBytes);
+			String output = Integer.toHexString(Integer.parseInt(value, 2));
+			for (int j = 0; j < 2 - output.length(); j++) {
+				output = "0" + output;
+			}
+			System.out.println(output);
+		}
 	}
 	
-	private void store(int index, int tag, int numBytes, int address) {
-		List<Block> cacheSet = this.myCache.get(index);
+	private boolean setFull(List<Block> set, int numWays) {
+		return set.size() >= numWays; 
+	}
+		
+	private String makeHex(String in) {
+		return Integer.toHexString(Integer.parseInt(in, 2)); // radix 2, then to hex
+	}
+	
+	private boolean needsPadding(int currByte, int address, int numBytes) {
+		return currByte >= address && (address + numBytes) > currByte; 
+	}
+		
+	private void store(List<Block> cacheSet, int index, int tag, int numBytes, int address) {
 		if (!cacheSet.contains(new Block(tag, this.blockSize)) || cacheSet == null) { 
 			System.out.println("Awww miss");
 		}
@@ -106,6 +165,19 @@ public class Cachesim {
 	
 	public static int kbToByte(int kb) {
 		return (int) (kb * (Math.pow(2, 10)));
+	}
+	
+	private int parseIndex(int address) {
+		int indexBits = address >> this.offsetBits;
+		return indexBits % this.numSets;
+	}
+	
+	private int parseBlkOff(int address) {
+		return address % this.offsetBits; 
+	}
+	
+	private int parseTag(int address) {
+		return address >> (this.indexBits + this.offsetBits);
 	}
 
 	// TODO: complete
