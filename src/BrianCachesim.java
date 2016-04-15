@@ -182,51 +182,51 @@ public class BrianCachesim {
 	// TODO: complete
 	public List<Instruction> buildInstructions() {
 		List<Instruction> out = new ArrayList<Instruction>(); 
-		try {
-			BufferedReader myReader = new BufferedReader (new FileReader(this.fileName));
-			int counter = 1; 
-			String line = myReader.readLine();
-			while (line != null){
-				String[] lineSplit = line.split(" ");
-				String type = lineSplit[0]; // 'load' or 'store' 
-				int address = Integer.toBinaryString(Integer.parseInt(lineSplit[1], 16)); 
-				int numBytes = 
-				System.out.println(address);
-				boolean hit = false; 
-				int offset = calcOffset(address);
-				int index = calcIndex(address); 
-				String tag = calcTag(address);
-				counter += 1;
-				line = myReader.readLine();
-				System.out.println(cs.instructionProcess(line, counter));
-			}
-		} catch (FileNotFoundException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-
 //		try {
-//			Scanner scanner = new Scanner(new File(this.fileName));
-//			while(scanner.hasNextLine()) {
-//				Scanner nextLine = new Scanner(scanner.nextLine());
-//				String instrType = nextLine.next(); 
-//				int address = Integer.decode(nextLine.next());
-//				int numBytes = Integer.parseInt(nextLine.next());
-//				// TODO: do rest of this scanner stuff
-//				Instruction instr;
-//				if (nextLine.hasNext()) {
-//					instr = new Instruction(address, 
-//											numBytes,
-//											instrType,
-//											Integer.toBinaryString(Integer.parseInt(nextLine.next(), 16)));
-//				}
-//				else {
-//					instr = new Instruction(address, numBytes, instrType); 
-//				}
-//				out.add(instr);
+//			BufferedReader myReader = new BufferedReader (new FileReader(this.fileName));
+//			int counter = 1; 
+//			String line = myReader.readLine();
+//			while (line != null){
+//				String[] lineSplit = line.split(" ");
+//				String type = lineSplit[0]; // 'load' or 'store' 
+//				int address = Integer.toBinaryString(Integer.parseInt(lineSplit[1], 16)); 
+//				int numBytes = 
+//				System.out.println(address);
+//				boolean hit = false; 
+//				int offset = calcOffset(address);
+//				int index = calcIndex(address); 
+//				String tag = calcTag(address);
+//				counter += 1;
+//				line = myReader.readLine();
+//				System.out.println(cs.instructionProcess(line, counter));
 //			}
-//		} catch (FileNotFoundException e) {
-//			System.out.println("File not found");
+//		} catch (FileNotFoundException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
+
+		try {
+			Scanner scanner = new Scanner(new File(this.fileName));
+			while(scanner.hasNextLine()) {
+				Scanner nextLine = new Scanner(scanner.nextLine());
+				String instrType = nextLine.next(); 
+				int address = Integer.decode(nextLine.next());
+				int numBytes = Integer.parseInt(nextLine.next());
+				// TODO: do rest of this scanner stuff
+				Instruction instr;
+				if (nextLine.hasNext()) {
+					instr = new Instruction(address, 
+											numBytes,
+											instrType,
+											Integer.toBinaryString(Integer.parseInt(nextLine.next(), 16)));
+				}
+				else {
+					instr = new Instruction(address, numBytes, instrType); 
+				}
+				out.add(instr);
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found");
 		}
 		return out; 
 	}
