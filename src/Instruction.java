@@ -3,34 +3,33 @@
  */
 public class Instruction {
 
-	private String instrType; // store or load 
+	private String type; // store or load 
+    private String address;
+    private int numBytes;
     private String writeVal;
 
-    private int address;
-    private int numBytes;
-
     // ex. load 0x000001 4 
-    public Instruction(int address, int numBytes, String instrType) {
-    	this.address = address;
+    public Instruction(String type, int numBytes, String address) {
+    	this.type = type; 
     	this.numBytes = numBytes;
-    	this.instrType = instrType; 
+    	this.address = address;
     	this.writeVal = ""; 
     }
 
     // ex. store 0x000000 4 deadbeef
-    public Instruction(int address, int numBytes, String instrType, String writeVal) {
-    	this.address = address;
+    public Instruction(String type, int numBytes, String address, String writeVal) {
+    	this.type = type; 
     	this.numBytes = numBytes;
-    	this.instrType = instrType;
+    	this.address = address;
     	this.writeVal = writeVal;
     }
 
 	public String getInstrType() {
-		return instrType;
+		return type;
 	}
 
 	public void setInstrType(String instrType) {
-		this.instrType = instrType;
+		this.type = instrType;
 	}
 
 	public String getWriteValue() {
@@ -41,11 +40,11 @@ public class Instruction {
 		this.writeVal = writeValue;
 	}
 
-	public int getAddress() {
+	public String getAddress() {
 		return address;
 	}
 
-	public void setAddress(int address) {
+	public void setAddress(String address) {
 		this.address = address;
 	}
 

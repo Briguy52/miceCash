@@ -59,9 +59,9 @@ public class BrianCachesim {
 	private void execute(Instruction instr) {
 
 		// TODO: refactor
-		int tag = this.parseTag(instr.getAddress()); // tag is to the 'left' of index + offset
-		int blockOffset = this.parseBlkOff(instr.getAddress());
-		int index = this.parseIndex(instr.getAddress());
+//		int tag = this.parseTag(instr.getAddress()); // tag is to the 'left' of index + offset
+//		int blockOffset = this.parseBlkOff(instr.getAddress());
+//		int index = this.parseIndex(instr.getAddress());
 
 		//		int numBytes = instr.getNumBytes();
 		String writeVal = this.padWithZeroes(instr.getWriteValue(), instr.getNumBytes() * 8);
@@ -180,45 +180,25 @@ public class BrianCachesim {
 	private int parseTag(int address) {
 		return address >> (this.indexBits + this.offsetBits);
 	}
+	
 
 	// TODO: complete
 	public List<Instruction> buildInstructions() {
 		List<Instruction> out = new ArrayList<Instruction>(); 
-//		try {
-//			BufferedReader myReader = new BufferedReader (new FileReader(this.fileName));
-//			int counter = 1; 
-//			String line = myReader.readLine();
-//			while (line != null){
-//				String[] lineSplit = line.split(" ");
-//				String type = lineSplit[0]; // 'load' or 'store' 
-//				int address = Integer.toBinaryString(Integer.parseInt(lineSplit[1], 16)); 
-//				int numBytes = 
-//				System.out.println(address);
-//				boolean hit = false; 
-//				int offset = calcOffset(address);
-//				int index = calcIndex(address); 
-//				String tag = calcTag(address);
-//				counter += 1;
-//				line = myReader.readLine();
-//				System.out.println(cs.instructionProcess(line, counter));
-//			}
-//		} catch (FileNotFoundException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-
 		try {
 			Scanner scanner = new Scanner(new File(this.fileName));
 			while(scanner.hasNextLine()) {
 				String[] instructionArray = scanner.nextLine().split(" "); 
-				
+				String type = instructionArray[0]; // store or load
 				String address = instructionArray[1]; // the hex address thing
 				int numBytes = Integer.parseInt(instructionArray[2]);
-				String writeValue = instructionArray[3];
-
-				int offset = calcOffset(address);
-				int index = calcIndex(address); 
-				String tag = calcTag(address);
+				if (instructionArray.length == 4) {
+					String writeValue = instructionArray[3];
+					out.add(new Instruction(type, numBytes, address, writeValue));
+				}
+				else {
+					out.add(new Instruction(type, numBytes, address));
+				}
 			}
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found");
