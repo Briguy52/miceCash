@@ -41,6 +41,7 @@ public class cachesim{
 		return (int) (kb * 1024);
 	}
 
+	// TODO: refactor
 	public static HashMap<Integer, List<Block>> makeCache(){
 		Map<Integer, List<Block>> cacheNew = new HashMap<Integer, List<Block>>();
 		int numBlocks = cacheSize / blockSize; 
@@ -61,6 +62,7 @@ public class cachesim{
 		return (HashMap<Integer, List<Block>>) cacheNew; 
 	}
 
+	// TODO: refactor
 	public static List<String> makeMemory(){
 		List<String> nm = new ArrayList<String>();
 		for (long i = 0; i < Math.pow(2, 24) - 1; i++){
@@ -104,13 +106,11 @@ public class cachesim{
 		return binaryString; 
 	}
 
-	//Calculate the tag of a given memory address
 	public static String calcTag (String address){
 		String binaryString = parseAddress(address); 
 		return binaryString.substring(0, binaryString.length() - offsetBits - indexBits); 
 	}
 
-	//Calculate the offset of a given memory address
 	public static int calcOffset (String address){
 		offsetBits = (int) logBase2(blockSize); 
 		String binaryString = parseAddress(address);
@@ -118,9 +118,6 @@ public class cachesim{
 	}
 
 	public static String instructionProcess (Instruction instruction, int counter){
-//		String[] instructionArray = instruction.split(" "); // split by spaces
-//		String type = instructionArray[0]; // 'store' or 'load' 
-//		String address = instructionArray[1]; // the hex address thing
 		
 		String type = instruction.getInstrType();
 
@@ -133,11 +130,6 @@ public class cachesim{
 	}
 
 	public static String store(Instruction instruction, int counter) {
-		// Check through entire cache for a tag that matches current tag
-
-//		String address = instructionArray[1]; // the hex address thing
-//		int numBytes = Integer.parseInt(instructionArray[2]);
-//		String writeValue = instructionArray[3];
 		
 		String address = instruction.getAddress();
 		int numBytes = instruction.getNumBytes();
@@ -355,9 +347,7 @@ public class cachesim{
 		int size = Integer.parseInt(test[1]);
 		int asso = Integer.parseInt(test[2]);
 		int block = Integer.parseInt(test[3]); 
-		//		System.out.println(block);
 
-//		BufferedReader br = new BufferedReader (new FileReader(fileName));
 		cachesim cs = new cachesim(size, asso, block); 
 		myCache = cs.makeCache(); 
 		myMem = cs.makeMemory();
@@ -365,12 +355,6 @@ public class cachesim{
 		for (int i=0; i<myInstructions.size(); i++) {
 			System.out.println(cs.instructionProcess(myInstructions.get(i), i+1));
 		}
-//		int counter = 1; 
-//		String line = br.readLine();
-//		while (line != null){
-//			System.out.println(cs.instructionProcess(line, counter));
-//			counter += 1;
-//			line = br.readLine();
-//		}
+
 	}
 }
