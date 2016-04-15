@@ -35,7 +35,6 @@ public class cachesim{
 		cacheSize = kbToByte(size); 
 		numWays = associativity;
 		blockSize = blocks;
-		
 	}
 	
 	public static int kbToByte(int kb) {
@@ -118,166 +117,187 @@ public class cachesim{
 		String binaryString = parseAddress(address);
 		return Integer.parseInt(binaryString.substring(binaryString.length() - offsetBits, binaryString.length()), 2); 
 	}
-	
-	public static String instructionProcess (String instruction, int pcCounter){
-		String[] parse = instruction.split(" ");
-		String address = parse[1]; 
-		System.out.println(address);
-		boolean hit = false; 
+
+	public static String instructionProcess (String instruction, int counter){
+		String[] instructionArray = instruction.split(" "); // split by spaces
+		String type = instructionArray[0]; // 'store' or 'load' 
+		String address = instructionArray[1]; // the hex address thing
+		System.out.println(address); 
+		
+		// offset, index, and tag of the instruction that was read 
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
 		String tag = calcTag(address);
+		
+		boolean hit = false; 
 		int hitIndex = 0; 
 		
-		if(parse.length == 4){ //store instruction found
+		switch (type) {
+		case "store": return store(hit, hitIndex, instructionArray, counter);
+		case "load": return load(hit, hitIndex, instructionArray);
+		}
+	}
+	
+	
+	public static String store(boolean hit, int hitIndex, String[] instructionArray, int counter) {
+		// Check through entire cache for a tag that matches current tag
+		String address = instructionArray[1]; // the hex address thing
+		int offset = calcOffset(address);
+		int index = calcIndex(address); 
+		String tag = calcTag(address);
+		
+		 for (int i = 0; i < myCache.get(index).size(); i++){
+			 Block sample = myCache.get(index).get(i); 
+			 if(sample.tag.equals(tag)){ //Match 
+				 hit = true; 
+				 hitIndex = i;
+				 break; 
+			 }
+		 }
+		 
+		 if (hit){
+			 for (int i = 0; i < Integer.parseInt(instructionArray[2]); i++){
+				 myCache.get(index).get(hitIndex).myValue.set(offset + i, instructionArray[3].substring(index, i+2)); 
+			 }
+			 myCache.get(index).get(hitIndex).dirtyBit = true; 
+			 return "split" + " " + instructionArray[1] + " hit"; 
+		 }
+		 
+		 else{
+			 String s0 = "";
+			 String s1 = "";
+			 
+			 for(int i = 0; i < offsetBits; i++){
+				 s0 += "0";
+				 s1 += "1"; 
+			 }
+			 
+			 String binaryAdd = Integer.toBinaryString(Integer.parseInt(address.substring(2), 16));
+			 while (binaryAdd.length() < 24){
+				 binaryAdd = "0" + binaryAdd; 
+			 }
+			 
+			 String indexString = binaryAdd.substring(binaryAdd.length() -offsetBits - indexBits, binaryAdd.length() - offsetBits);
+			 String binaryAdd1 = tag + indexString + s0; 
+			 String binaryAdd2 = tag + indexString + s1; 
+			 int lower = Integer.parseInt(binaryAdd1, 2);
+			 int upper = Integer.parseInt(binaryAdd2, 2); 
+			 
+			 for (int i = 0; i< Integer.parseInt(instructionArray[2]); i++){
+				 myMem.set(lower + i, instructionArray[3].substring(2*i, 2*i+2));
+			 }
+			 
+			 //This may be wrong. arg 5
+			 Block cacheNew = new Block(true, false, tag, counter, myMem.subList(lower, upper + 1)); 
+			 boolean full = true; 
+			 
 			 for (int i = 0; i < myCache.get(index).size(); i++){
-				 Block sample = myCache.get(index).get(i); 
-				 if(sample.tag.equals(tag)){ //Match 
-					 hit = true; 
-					 hitIndex = i;
+				 Block sample = myCache.get(index).get(i);
+				 
+				 if(!sample.validBit){
+					 myCache.get(index).set(i, cacheNew);
+					 full = false;
 					 break; 
 				 }
 			 }
-			 if (hit){
-				 for (int i = 0; i < Integer.parseInt(parse[2]); i++){
-					 myCache.get(index).get(hitIndex).myValue.set(offset + i, parse[3].substring(index, i+2)); 
+			 
+			 if (full){
+				 int indexMin = 0;
+				 int absMin = Integer.MAX_VALUE; 
+				 
+				 for(int i = 0; i < myCache.get(index).size(); i++){
+					 if (myCache.get(index).get(i).address < absMin){
+						 absMin = myCache.get(index).get(i).address;
+						 indexMin = i; 
+					 }
 				 }
-				 myCache.get(index).get(hitIndex).dirtyBit = true; 
-				 return "split" + " " + parse[1] + " hit"; 
+				 if (myCache.get(index).get(indexMin).dirtyBit){
+					 for (int i = lower; i <= upper; i++){
+						 myMem.set(i, myCache.get(index).get(indexMin).myValue.get(i-lower)); 
+					 }
+				 }
+				 myCache.get(index).set(indexMin, cacheNew); 
 			 }
-			 else{
-				 String s0 = "";
-				 String s1 = "";
-				 
-				 for(int i = 0; i < offsetBits; i++){
-					 s0 += "0";
-					 s1 += "1"; 
-				 }
-				 
-				 String binaryAdd = Integer.toBinaryString(Integer.parseInt(address.substring(2), 16));
-				 while (binaryAdd.length() < 24){
-					 binaryAdd = "0" + binaryAdd; 
-				 }
-				 String indexString = binaryAdd.substring(binaryAdd.length() -offsetBits - indexBits, binaryAdd.length() - offsetBits);
-				 String binaryAdd1 = tag + indexString + s0; 
-				 String binaryAdd2 = tag + indexString + s1; 
-				 int lower = Integer.parseInt(binaryAdd1, 2);
-				 int upper = Integer.parseInt(binaryAdd2, 2); 
-				 
-				 for (int i = 0; i< Integer.parseInt(parse[2]); i++){
-					 myMem.set(lower + i, parse[3].substring(2*i, 2*i+2));
-				 }
-				 
-				 //This may be wrong. arg 5
-				 Block cacheNew = new Block(true, false, tag, pcCounter, myMem.subList(lower, upper + 1)); 
-				 boolean full = true; 
-				 
-				 for (int i = 0; i < myCache.get(index).size(); i++){
-					 Block sample = myCache.get(index).get(i);
-					 
-					 if(!sample.validBit){
-						 myCache.get(index).set(i, cacheNew);
-						 full = false;
-						 break; 
-					 }
-				 }
-				 
-				 if (full){
-					 int indexMin = 0;
-					 int absMin = Integer.MAX_VALUE; 
-					 
-					 for(int i = 0; i < myCache.get(index).size(); i++){
-						 if (myCache.get(index).get(i).address < absMin){
-							 absMin = myCache.get(index).get(i).address;
-							 indexMin = i; 
-						 }
-					 }
-					 if (myCache.get(index).get(indexMin).dirtyBit){
-						 for (int i = lower; i <= upper; i++){
-							 myMem.set(i, myCache.get(index).get(indexMin).myValue.get(i-lower)); 
-						 }
-					 }
-					 myCache.get(index).set(indexMin, cacheNew); 
-				 }
-				 return "store" + " " + parse[1] + " miss"; 
-			 }
+			 return "store" + " " + instructionArray[1] + " miss"; 
+		 }
+	}
+	
+	
+	public static String load(boolean hit, int hitIndex, String[] instructionArray) {
+		for (int i = 0; i < myCache.get(index).size(); i++){
+			Block sample = myCache.get(index).get(i); 
+			
+			if(sample.tag.equals(tag)){
+				hit = true;
+				hitIndex = i;
+				break;
+			}
+		}
+		if (hit) {
+			String value = "";
+			for (int i = 0; i < Integer.parseInt(instructionArray[2]); i++){
+				if (myCache.get(index).get(hitIndex).myValue.get(offset + i).equals("")){
+					value += "00";
+				}
+				else{
+					value += myCache.get(index).get(hitIndex).myValue.get(offset + i);  
+				}
+			}
+			return instructionArray[0] + " " + instructionArray[1] + " hit " + value; 
 		}
 		else{
-			for (int i = 0; i < myCache.get(index).size(); i++){
-				Block sample = myCache.get(index).get(i); 
-				
-				if(sample.tag.equals(tag)){
-					hit = true;
-					hitIndex = i;
-					break;
+			String s0 = "";
+			String s1 = "";
+			for (int i = 0; i < offsetBits; i++){
+				s0 += "0";
+				s1 += "1";
+			}
+			String binaryAdd = Integer.toBinaryString(Integer.parseInt(address.substring(2), 16)); 
+			while (binaryAdd.length() < 24){
+				binaryAdd = "0" + binaryAdd; 
+			}
+			String sIndex = binaryAdd.substring(binaryAdd.length() - offsetBits - indexBits, binaryAdd.length() - offsetBits);
+			String bAdd0 = tag + sIndex + s0;
+			String bAdd1 = tag + sIndex + s1;
+			int lower = Integer.parseInt(bAdd0, 2);
+			int upper = Integer.parseInt(bAdd1, 2); 
+			Block sample = new Block(true, false, tag, counter, myMem.subList(lower,  upper + 1));
+			boolean full = true;
+			
+			for(int i = 0; i< myCache.get(index).size(); i++){
+				Block test = myCache.get(index).get(i);
+				if (!test.validBit){
+					myCache.get(index).set(index,  sample); 
+					full = false;
+					break; 
 				}
 			}
-			if (hit) {
-				String value = "";
-				for (int i = 0; i < Integer.parseInt(parse[2]); i++){
-					if (myCache.get(index).get(hitIndex).myValue.get(offset + i).equals("")){
-						value += "00";
-					}
-					else{
-						value += myCache.get(index).get(hitIndex).myValue.get(offset + i);  
+			if (full){
+				int minI = 0;
+				int absMin = Integer.MAX_VALUE;
+				for (int i = 0; i < myCache.get(index).size(); i++){
+					if (myCache.get(index).get(i).address < absMin){
+						absMin = myCache.get(index).get(i).address;
+						minI = i;
 					}
 				}
-				return parse[0] + " " + parse[1] + " hit " + value; 
+				if (myCache.get(index).get(minI).dirtyBit){
+					for(int i = lower; i <= upper; i++){
+						myMem.set(i, myCache.get(index).get(minI).myValue.get(i = lower));
+					}
+				}
+				myCache.get(index).set(minI, sample);
 			}
-			else{
-				String s0 = "";
-				String s1 = "";
-				for (int i = 0; i < offsetBits; i++){
-					s0 += "0";
-					s1 += "1";
+			String value ="";
+			for (int i = 0; i<Integer.parseInt(instructionArray[2]); i++){
+				if (sample.myValue.get(offset + i).equals("")){
+					value += "00";
 				}
-				String binaryAdd = Integer.toBinaryString(Integer.parseInt(address.substring(2), 16)); 
-				while (binaryAdd.length() < 24){
-					binaryAdd = "0" + binaryAdd; 
+				else{
+					value += sample.myValue.get(offset+i);
 				}
-				String sIndex = binaryAdd.substring(binaryAdd.length() - offsetBits - indexBits, binaryAdd.length() - offsetBits);
-				String bAdd0 = tag + sIndex + s0;
-				String bAdd1 = tag + sIndex + s1;
-				int lower = Integer.parseInt(bAdd0, 2);
-				int upper = Integer.parseInt(bAdd1, 2); 
-				Block sample = new Block(true, false, tag, pcCounter, myMem.subList(lower,  upper + 1));
-				boolean full = true;
-				
-				for(int i = 0; i< myCache.get(index).size(); i++){
-					Block test = myCache.get(index).get(i);
-					if (!test.validBit){
-						myCache.get(index).set(index,  sample); 
-						full = false;
-						break; 
-					}
-				}
-				if (full){
-					int minI = 0;
-					int absMin = Integer.MAX_VALUE;
-					for (int i = 0; i < myCache.get(index).size(); i++){
-						if (myCache.get(index).get(i).address < absMin){
-							absMin = myCache.get(index).get(i).address;
-							minI = i;
-						}
-					}
-					if (myCache.get(index).get(minI).dirtyBit){
-						for(int i = lower; i <= upper; i++){
-							myMem.set(i, myCache.get(index).get(minI).myValue.get(i = lower));
-						}
-					}
-					myCache.get(index).set(minI, sample);
-				}
-				String value ="";
-				for (int i = 0; i<Integer.parseInt(parse[2]); i++){
-					if (sample.myValue.get(offset + i).equals("")){
-						value += "00";
-					}
-					else{
-						value += sample.myValue.get(offset+i);
-					}
-				}
-				return parse[0] + " " + parse[1] + " miss " +value; 
 			}
+			return instructionArray[0] + " " + instructionArray[1] + " miss " +value; 
 		}
 	}
 	
