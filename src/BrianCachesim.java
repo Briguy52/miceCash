@@ -67,6 +67,8 @@ public class BrianCachesim {
 		String writeVal = this.padWithZeroes(instr.getWriteValue(), instr.getNumBytes() * 8);
 		String hexAddress = this.padWithZeroes(Integer.toString(instr.getAddress()), 6);
 		List<oldBlock> cacheSet = this.myCache.get(index);
+		
+		
 		switch (instr.getInstrType()) {
 		case "store": this.store(cacheSet, index, tag, instr.getNumBytes(), instr.getAddress(), blockOffset, writeVal);
 		break; 
@@ -77,7 +79,7 @@ public class BrianCachesim {
 	}
 
 	private void load(List<oldBlock> cacheSet, int index, int tag, int numBytes, int address, int blkOff) {
-		if (!cacheSet.contains(new oldBlock(tag, this.blockSize)) || cacheSet == null) { 
+		if (cacheSet == null || !cacheSet.contains(new oldBlock(tag, this.blockSize))) { 
 			System.out.println("Awww miss");
 			// Begin loading in a new Block
 			oldBlock block = new oldBlock(tag, this.blockSize); 
@@ -134,11 +136,11 @@ public class BrianCachesim {
 	}
 
 	private void store(List<oldBlock> cacheSet, int index, int tag, int numBytes, int address, int blkOff, String writeVal) {
-		if (!cacheSet.contains(new oldBlock(tag, this.blockSize)) || cacheSet == null) { 
-			System.out.println("Awww miss");
+		if (cacheSet == null || cacheSet.contains(new oldBlock(tag, this.blockSize)) ) { 
+			System.out.println("store " + address + " miss");
 		}
 		else { 
-			System.out.println("Wooo hit!");
+			System.out.println("store " + address + " hit"); 
 			oldBlock block = cacheSet.remove(cacheSet.indexOf(new oldBlock(tag, this.blockSize))); 
 			// rewrite data & "refresh" cache entry by re-adding to end
 			block.write(writeVal, blkOff, numBytes);
@@ -208,22 +210,15 @@ public class BrianCachesim {
 		try {
 			Scanner scanner = new Scanner(new File(this.fileName));
 			while(scanner.hasNextLine()) {
-				Scanner nextLine = new Scanner(scanner.nextLine());
-				String instrType = nextLine.next(); 
-				int address = Integer.decode(nextLine.next());
-				int numBytes = Integer.parseInt(nextLine.next());
-				// TODO: do rest of this scanner stuff
-				Instruction instr;
-				if (nextLine.hasNext()) {
-					instr = new Instruction(address, 
-											numBytes,
-											instrType,
-											Integer.toBinaryString(Integer.parseInt(nextLine.next(), 16)));
-				}
-				else {
-					instr = new Instruction(address, numBytes, instrType); 
-				}
-				out.add(instr);
+				String[] instructionArray = scanner.nextLine().split(" "); 
+				
+				String address = instructionArray[1]; // the hex address thing
+				int numBytes = Integer.parseInt(instructionArray[2]);
+				String writeValue = instructionArray[3];
+
+				int offset = calcOffset(address);
+				int index = calcIndex(address); 
+				String tag = calcTag(address);
 			}
 		} catch (FileNotFoundException e) {
 			System.out.println("File not found");
