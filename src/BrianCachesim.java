@@ -40,15 +40,15 @@ public class BrianCachesim {
 		this.numBlocks = this.cacheSize / this.blockSize;
 		this.numSets = this.numBlocks / this.numWays; 
 
-		this.offsetBits = this.logBase2(this.blockSize); 
-		this.indexBits = this.logBase2(this.numSets);
+		this.offsetBits = logBase2(this.blockSize); 
+		this.indexBits = logBase2(this.numSets);
 
 		this.myInstructions = this.buildInstructions();
 		this.loopThroughInstructions(this.myInstructions);
 	}
 
 	// Change of base from nat. log to 2 
-	private int logBase2(int value) {
+	private static int logBase2(int value) {
 		return (int) (Math.log(value) / Math.log(2));
 	}
 
@@ -62,10 +62,14 @@ public class BrianCachesim {
 //		int tag = this.parseTag(instr.getAddress()); // tag is to the 'left' of index + offset
 //		int blockOffset = this.parseBlkOff(instr.getAddress());
 //		int index = this.parseIndex(instr.getAddress());
+		
+		int offset = calcOffset(address);
+		int index = calcIndex(address); 
+		String tag = calcTag(address);
 
 		//		int numBytes = instr.getNumBytes();
 		String writeVal = this.padWithZeroes(instr.getWriteValue(), instr.getNumBytes() * 8);
-		String hexAddress = this.padWithZeroes(Integer.toString(instr.getAddress()), 6);
+		String hexAddress = this.padWithZeroes(instr.getAddress(), 6);
 		List<oldBlock> cacheSet = this.myCache.get(index);
 		
 		
@@ -93,8 +97,7 @@ public class BrianCachesim {
 				block.writeByte(memVal, blkOff + i - address);
 				if (this.needsPadding(i, address, numBytes)) {
 					String toPad = this.makeHex(memVal);
-					String afterPad = this.padWithZeroes(toPad, 2);
-					System.out.println(afterPad); // for testing
+					String afterPad = this.padString(toPad, 2);
 				}
 			}
 			// Now we need to make/find a set to put this in 
@@ -113,14 +116,43 @@ public class BrianCachesim {
 			}
 		}
 		else {
-			System.out.print("Woooo hit!");
+//			System.out.print("Woooo hit!");
 			oldBlock block = cacheSet.remove(cacheSet.indexOf(new oldBlock(tag, this.blockSize)));
 			cacheSet.add(block); 
 			String readVal = block.read(blkOff, numBytes);
 			String toPad = this.makeHex(readVal);
-			String afterPad = this.padWithZeroes(toPad, 2);
-			System.out.println(afterPad); 
+			String afterPad = this.padString(toPad, 2);
+//			System.out.println(afterPad); 
+			System.out.println("load " + afterPad + " hit"); 
 		}
+	}
+	
+	private String hexToBinaryString(String hex) {
+		return Integer.toBinaryString(Integer.parseInt(hex.substring(2), 16));
+	}
+	
+	private String padString(String toPad, int desiredLength) {
+		while (toPad.length() < desiredLength) {
+			toPad = "0" + toPad;
+		}
+		return toPad; 
+	}
+	
+	private String parseAddress(String address) {
+		String binaryString = hexToBinaryString(address); 
+		binaryString = padString(binaryString, 24); 
+		return binaryString; 
+	}
+	
+	private String calcTag (String address){
+		String binaryString = parseAddress(address); 
+		return binaryString.substring(0, binaryString.length() - offsetBits - indexBits); 
+	}
+
+	private int calcOffset (String address){
+		this.offsetBits = (int) logBase2(blockSize); 
+		String binaryString = parseAddress(address);
+		return Integer.parseInt(binaryString.substring(binaryString.length() - offsetBits, binaryString.length()), 2); 
 	}
 
 	private boolean setFull(List<oldBlock> set, int numWays) {
@@ -156,15 +188,7 @@ public class BrianCachesim {
 		return full.substring(current * 8, (current + 1) * 8); 
 	}
 
-	private String padWithZeroes(String val, int expectedLength) {
-		String out = val; 
-		for (int i=0; i< (expectedLength - val.length()); i++) {
-			out = "0" + out; // prepend a 0 to pad
-		} 
-		return out; 
-	}
-
-	public static int kbToByte(int kb) {
+	private int kbToByte(int kb) {
 		return (int) (kb * 1024);
 	}
 

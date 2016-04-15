@@ -308,6 +308,30 @@ public class cachesim{
 			return "load " + address + " miss " + value; 
 		}
 	}
+	
+	public List<Instruction> buildInstructions(String fileName) {
+		List<Instruction> out = new ArrayList<Instruction>(); 
+		try {
+			Scanner scanner = new Scanner(new File(fileName));
+			while(scanner.hasNextLine()) {
+				String[] instructionArray = scanner.nextLine().split(" "); 
+				String type = instructionArray[0]; // store or load
+				String address = instructionArray[1]; // the hex address thing
+				int numBytes = Integer.parseInt(instructionArray[2]);
+				if (instructionArray.length == 4) {
+					String writeValue = instructionArray[3];
+					out.add(new Instruction(type, numBytes, address, writeValue));
+				}
+				else {
+					out.add(new Instruction(type, numBytes, address));
+				}
+			}
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found");
+		}
+		return out; 
+	}
+
 
 	public static void main(String [] args) throws IOException{
 		String[] test = {"tracefile_simple", "1024", "4", "32"};
@@ -324,16 +348,20 @@ public class cachesim{
 		int block = Integer.parseInt(test[3]); 
 		//		System.out.println(block);
 
-		BufferedReader br = new BufferedReader (new FileReader(fileName));
+//		BufferedReader br = new BufferedReader (new FileReader(fileName));
 		cachesim cs = new cachesim(size, asso, block); 
 		myCache = cs.makeCache(); 
 		myMem = cs.makeMemory();
-		int counter = 1; 
-		String line = br.readLine();
-		while (line != null){
-			System.out.println(cs.instructionProcess(line, counter));
-			counter += 1;
-			line = br.readLine();
+		List<Instruction> myInstructions = cs.buildInstructions(fileName); 
+		for (int i=1; i<myInstructions.size(); i++) {
+			System.out.println(cs.instructionProcess(instruction, i));
 		}
+//		int counter = 1; 
+//		String line = br.readLine();
+//		while (line != null){
+//			System.out.println(cs.instructionProcess(line, counter));
+//			counter += 1;
+//			line = br.readLine();
+//		}
 	}
 }
