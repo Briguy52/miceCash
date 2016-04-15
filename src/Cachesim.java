@@ -117,25 +117,31 @@ public class cachesim{
 		return Integer.parseInt(binaryString.substring(binaryString.length() - offsetBits, binaryString.length()), 2); 
 	}
 
-	public static String instructionProcess (String instruction, int counter){
-		String[] instructionArray = instruction.split(" "); // split by spaces
-		String type = instructionArray[0]; // 'store' or 'load' 
-		String address = instructionArray[1]; // the hex address thing
+	public static String instructionProcess (Instruction instruction, int counter){
+//		String[] instructionArray = instruction.split(" "); // split by spaces
+//		String type = instructionArray[0]; // 'store' or 'load' 
+//		String address = instructionArray[1]; // the hex address thing
+		
+		String type = instruction.getInstrType();
 
 		if (type.equals("store")) {
-			return store(instructionArray, counter);
+			return store(instruction, counter);
 		}
 		else {
-			return load(instructionArray, counter);
+			return load(instruction, counter);
 		}
 	}
 
-	public static String store(String[] instructionArray, int counter) {
+	public static String store(Instruction instruction, int counter) {
 		// Check through entire cache for a tag that matches current tag
 
-		String address = instructionArray[1]; // the hex address thing
-		int numBytes = Integer.parseInt(instructionArray[2]);
-		String writeValue = instructionArray[3];
+//		String address = instructionArray[1]; // the hex address thing
+//		int numBytes = Integer.parseInt(instructionArray[2]);
+//		String writeValue = instructionArray[3];
+		
+		String address = instruction.getAddress();
+		int numBytes = instruction.getNumBytes();
+		String writeValue = instruction.getWriteValue();
 
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
@@ -222,10 +228,13 @@ public class cachesim{
 	}
 
 
-	public static String load(String[] instructionArray, int counter) {
+	public static String load(Instruction instruction, int counter) {
 
-		String address = instructionArray[1]; // the hex address thing
-		int numBytes = Integer.parseInt(instructionArray[2]);
+//		String address = instructionArray[1]; // the hex address thing
+//		int numBytes = Integer.parseInt(instructionArray[2]);
+		
+		String address = instruction.getAddress();
+		int numBytes = instruction.getNumBytes();
 
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
@@ -353,8 +362,8 @@ public class cachesim{
 		myCache = cs.makeCache(); 
 		myMem = cs.makeMemory();
 		List<Instruction> myInstructions = cs.buildInstructions(fileName); 
-		for (int i=1; i<myInstructions.size(); i++) {
-			System.out.println(cs.instructionProcess(instruction, i));
+		for (int i=0; i<myInstructions.size(); i++) {
+			System.out.println(cs.instructionProcess(myInstructions.get(i), i+1));
 		}
 //		int counter = 1; 
 //		String line = br.readLine();
