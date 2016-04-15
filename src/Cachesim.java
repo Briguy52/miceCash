@@ -132,16 +132,24 @@ public class cachesim{
 		boolean hit = false; 
 		int hitIndex = 0; 
 		
+		String out = ""; 
+		
 		switch (type) {
-		case "store": return store(hit, hitIndex, instructionArray, counter);
-		case "load": return load(hit, hitIndex, instructionArray);
+		case "store": out = store(hit, hitIndex, instructionArray, counter);
+		case "load": out = load(hit, hitIndex, instructionArray);
 		}
+		
+		return out;
 	}
 	
 	
 	public static String store(boolean hit, int hitIndex, String[] instructionArray, int counter) {
 		// Check through entire cache for a tag that matches current tag
+		
 		String address = instructionArray[1]; // the hex address thing
+		int numBytes = Integer.parseInt(instructionArray[2]);
+		String writeValue = instructionArray[3];
+		
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
 		String tag = calcTag(address);
@@ -156,11 +164,11 @@ public class cachesim{
 		 }
 		 
 		 if (hit){
-			 for (int i = 0; i < Integer.parseInt(instructionArray[2]); i++){
-				 myCache.get(index).get(hitIndex).myValue.set(offset + i, instructionArray[3].substring(index, i+2)); 
+			 for (int i = 0; i < numBytes; i++){
+				 myCache.get(index).get(hitIndex).myValue.set(offset + i, writeValue.substring(index, i+2)); 
 			 }
 			 myCache.get(index).get(hitIndex).dirtyBit = true; 
-			 return "split" + " " + instructionArray[1] + " hit"; 
+			 return "split" + " " + address + " hit"; 
 		 }
 		 
 		 else{
@@ -172,22 +180,23 @@ public class cachesim{
 				 s1 += "1"; 
 			 }
 			 
-			 String binaryAdd = Integer.toBinaryString(Integer.parseInt(address.substring(2), 16));
-			 while (binaryAdd.length() < 24){
-				 binaryAdd = "0" + binaryAdd; 
-			 }
+			 String binaryString = parseAddress(address); 
 			 
-			 String indexString = binaryAdd.substring(binaryAdd.length() -offsetBits - indexBits, binaryAdd.length() - offsetBits);
+			 String indexString = binaryString.substring(binaryString.length() - offsetBits - indexBits, binaryString.length() - offsetBits);
+			 
 			 String binaryAdd1 = tag + indexString + s0; 
 			 String binaryAdd2 = tag + indexString + s1; 
+			 
 			 int lower = Integer.parseInt(binaryAdd1, 2);
 			 int upper = Integer.parseInt(binaryAdd2, 2); 
 			 
-			 for (int i = 0; i< Integer.parseInt(instructionArray[2]); i++){
-				 myMem.set(lower + i, instructionArray[3].substring(2*i, 2*i+2));
+			 for (int i = 0; i< numBytes; i++){
+				 int currentBinaryIndex = i * 2;
+				 int nextBinaryIndex = (2 * i) + 2; 
+				 myMem.set(lower + i, writeValue.substring(currentBinaryIndex, nextBinaryIndex));
 			 }
 			 
-			 //This may be wrong. arg 5
+			 // TODO: check it
 			 Block cacheNew = new Block(true, false, tag, counter, myMem.subList(lower, upper + 1)); 
 			 boolean full = true; 
 			 
@@ -218,7 +227,7 @@ public class cachesim{
 				 }
 				 myCache.get(index).set(indexMin, cacheNew); 
 			 }
-			 return "store" + " " + instructionArray[1] + " miss"; 
+			 return "store" + " " + address + " miss"; 
 		 }
 	}
 	
