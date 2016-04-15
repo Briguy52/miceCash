@@ -14,7 +14,7 @@ public class cachesim{
 		//Creating the cache object that holds necessary info
 		public Block (boolean va, boolean di, String ta, int tS, List<String> d){
 			validBit = va;
-			di = dirtyBit;
+			dirtyBit = di; 
 			tag = ta;
 			address = tS; 
 			myValue = d; 
