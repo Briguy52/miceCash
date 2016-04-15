@@ -1,5 +1,5 @@
 
-public class Block {
+public class oldBlock {
 	
 	private String myValue; 
 	private int blockSize; 
@@ -7,9 +7,9 @@ public class Block {
 	
 	// Blocks are basically just a String that has 8 chars 
 	
-	public Block() {};
+	public oldBlock() {};
 	
-	public Block(int tag, int size) {
+	public oldBlock(int tag, int size) {
 		this.blockSize = size; 
 		this.tag = tag; 
 		this.initValue(this.blockSize);
@@ -17,7 +17,7 @@ public class Block {
 	
 	@Override
 	public boolean equals(Object potentialBlock) {
-		return this.tag == ((Block) potentialBlock).tag;
+		return this.tag == ((oldBlock) potentialBlock).tag;
 	}
 	
 	private void initValue(int size) {

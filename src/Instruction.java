@@ -3,12 +3,13 @@
  */
 public class Instruction {
 
-	private String instrType;
+	private String instrType; // store or load 
     private String writeVal;
 
     private int address;
     private int numBytes;
 
+    // ex. load 0x000001 4 
     public Instruction(int address, int numBytes, String instrType) {
     	this.address = address;
     	this.numBytes = numBytes;
@@ -16,6 +17,7 @@ public class Instruction {
     	this.writeVal = ""; 
     }
 
+    // ex. store 0x000000 4 deadbeef
     public Instruction(int address, int numBytes, String instrType, String writeVal) {
     	this.address = address;
     	this.numBytes = numBytes;
