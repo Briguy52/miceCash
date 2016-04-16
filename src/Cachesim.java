@@ -174,16 +174,16 @@ public class cachesim{
 	}
 
 	public static String load(Instruction instruction, int counter) {
-		
+
 		String address = instruction.address;
 		int numBytes = instruction.numBytes;
-		
+
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
 		String tag = calcTag(address);
-		
+
 		int hitIndex = getHitIndex(index, tag); 
-		
+
 		if (didHit(index, tag)) {
 			String value = "";
 			int count = 0;
@@ -263,7 +263,7 @@ public class cachesim{
 		}
 		return out; 
 	}
-	
+
 	public static Map<Integer, List<Block>> initCache(){
 		Map<Integer, List<Block>> cacheNew = new HashMap<Integer, List<Block>>();
 		int numBlocks = cacheSize / blockSize; 
@@ -289,18 +289,17 @@ public class cachesim{
 	}
 
 	public static void main(String [] args) throws IOException{
-		String[] test = {"tracefile_simple", "1024", "4", "32"};
+		//		String[] test = {"tracefile_simple", "1024", "4", "32"};
 
-		//		String fileName = args[0]; 
-		//		int size = Integer.parseInt(args[1]);
-		//		int asso = Integer.parseInt(args[2]);
-		//		int block = Integer.parseInt(args[3]); 
-		//		System.out.println(block);
-
-		String fileName = test[0]; 
-		int size = Integer.parseInt(test[1]);
-		int asso = Integer.parseInt(test[2]);
-		int block = Integer.parseInt(test[3]); 
+		String fileName = args[0]; 
+		int size = Integer.parseInt(args[1]);
+		int asso = Integer.parseInt(args[2]);
+		int block = Integer.parseInt(args[3]); 
+		//
+		//		String fileName = test[0]; 
+		//		int size = Integer.parseInt(test[1]);
+		//		int asso = Integer.parseInt(test[2]);
+		//		int block = Integer.parseInt(test[3]); 
 
 		cachesim cs = new cachesim(size, asso, block); 
 		List<Instruction> myInstructions = buildInstructions(fileName); 
