@@ -6,15 +6,13 @@ public class cachesim{
 
 	private static class Block {
 		boolean validBit;
-		boolean dirtyBit;
 		String tag; 
 		int address; 
 		List<String> myValue;
 
 		//Creating the cache object that holds necessary info
-		public Block (boolean va, boolean di, String ta, int tS, List<String> d){
-			validBit = va;
-			dirtyBit = di; 
+		public Block (boolean va, String ta, int tS, List<String> d){
+			validBit = va; // was this just initialized or not? 
 			tag = ta;
 			address = tS; 
 			myValue = d; 
@@ -53,7 +51,7 @@ public class cachesim{
 			List<Block> newArray = new ArrayList<Block>(); 
 			List<String> dataToPut = new ArrayList<String>(); 
 			for (int j = 0; j < numWays; j++){
-				Block cacheToPut = new Block(false, false, "", 0, dataToPut); 
+				Block cacheToPut = new Block(false, "", 0, dataToPut); 
 				newArray.add(cacheToPut);
 			}
 			cacheNew.put(set, newArray);
@@ -120,6 +118,7 @@ public class cachesim{
 	public static String instructionProcess (Instruction instruction, int counter){
 		
 		String type = instruction.getInstrType();
+		System.out.println(type); 
 
 		if (type.equals("store")) {
 			return store(instruction, counter);
@@ -128,7 +127,7 @@ public class cachesim{
 			return load(instruction, counter);
 		}
 	}
-
+	
 	public static String store(Instruction instruction, int counter) {
 		
 		String address = instruction.getAddress();
@@ -139,23 +138,34 @@ public class cachesim{
 		int index = calcIndex(address); 
 		String tag = calcTag(address);
 
+//		boolean hit = false; 
+//		int hitIndex = 0; 
+//
+//		for (int i = 0; i < myCache.get(index).size(); i++){
+//			Block sample = myCache.get(index).get(i); 
+//			if (sample.tag.equals(tag)) { //Match 
+//				hit = true; 
+//				hitIndex = i;
+//				break; 
+//			}
+//		}
+		
 		boolean hit = false; 
 		int hitIndex = 0; 
-
-		for (int i = 0; i < myCache.get(index).size(); i++){
-			Block sample = myCache.get(index).get(i); 
-			if (sample.tag.equals(tag)) { //Match 
-				hit = true; 
-				hitIndex = i;
+		while (hitIndex < myCache.get(index).size()) {
+			Block checkBlock = myCache.get(index).get(hitIndex);
+			if (tag.equals(checkBlock.tag)) {
+				hit = true;
 				break; 
 			}
+			hitIndex++; 
 		}
 
 		if (hit){
 			for (int i = 0; i < numBytes; i++){
 				myCache.get(index).get(hitIndex).myValue.set(offset + i, writeValue.substring(index, i+2)); 
 			}
-			myCache.get(index).get(hitIndex).dirtyBit = true; 
+//			myCache.get(index).get(hitIndex).dirtyBit = true; 
 			return "split" + " " + address + " hit"; 
 		}
 
@@ -185,7 +195,7 @@ public class cachesim{
 			}
 
 			// TODO: check it
-			Block cacheNew = new Block(true, false, tag, counter, myMem.subList(lower, upper + 1)); 
+			Block cacheNew = new Block(true, tag, counter, myMem.subList(lower, upper + 1)); 
 			boolean full = true; 
 
 			for (int i = 0; i < myCache.get(index).size(); i++){
@@ -198,7 +208,7 @@ public class cachesim{
 				}
 			}
 
-			if (full){
+			if (full) { // Write through 
 				int indexMin = 0;
 				int absMin = Integer.MAX_VALUE; 
 
@@ -208,11 +218,11 @@ public class cachesim{
 						indexMin = i; 
 					}
 				}
-				if (myCache.get(index).get(indexMin).dirtyBit){
-					for (int i = lower; i <= upper; i++){
-						myMem.set(i, myCache.get(index).get(indexMin).myValue.get(i-lower)); 
-					}
-				}
+//				if (myCache.get(index).get(indexMin).dirtyBit){
+//					for (int i = lower; i <= upper; i++){
+//						myMem.set(i, myCache.get(index).get(indexMin).myValue.get(i-lower)); 
+//					}
+//				}
 				myCache.get(index).set(indexMin, cacheNew); 
 			}
 			return "store " + address + " miss"; 
@@ -270,7 +280,7 @@ public class cachesim{
 			String bAdd1 = tag + sIndex + s1;
 			int lower = Integer.parseInt(bAdd0, 2);
 			int upper = Integer.parseInt(bAdd1, 2); 
-			Block sample = new Block(true, false, tag, counter, myMem.subList(lower,  upper + 1));
+			Block sample = new Block(true, tag, counter, myMem.subList(lower,  upper + 1));
 			boolean full = true;
 
 			for (int i = 0; i< myCache.get(index).size(); i++){
@@ -290,11 +300,11 @@ public class cachesim{
 						minI = i;
 					}
 				}
-				if (myCache.get(index).get(minI).dirtyBit){
-					for(int i = lower; i <= upper; i++){
-						myMem.set(i, myCache.get(index).get(minI).myValue.get(i = lower));
-					}
-				}
+//				if (myCache.get(index).get(minI).dirtyBit){
+//					for(int i = lower; i <= upper; i++){
+//						myMem.set(i, myCache.get(index).get(minI).myValue.get(i = lower));
+//					}
+//				}
 				myCache.get(index).set(minI, sample);
 			}
 			String value ="";
