@@ -123,7 +123,6 @@ public class cachesim{
 	public static String instructionProcess (Instruction instruction, int counter){
 		
 		String type = instruction.getInstrType();
-		System.out.println(type); 
 
 		if (type.equals("store")) {
 			return store(instruction, counter);
@@ -131,22 +130,6 @@ public class cachesim{
 		else {
 			return load(instruction, counter);
 		}
-	}
-	
-	public static String offsetPad0() {
-		String out = "";
-		while (out.length() < offsetBits) {
-			out += "0"; 
-		}
-		return out; 
-	}
-	
-	public static String offsetPad1() {
-		String out = "";
-		while (out.length() < offsetBits) {
-			out += "1"; 
-		}
-		return out; 
 	}
 	
 	public static String store(Instruction instruction, int counter) {
@@ -192,21 +175,21 @@ public class cachesim{
 				myMem.set(lower + i, writeValue.substring(currentBinaryIndex, nextBinaryIndex));
 			}
 
-			// TODO: check it
-			Block cacheNew = new Block(true, tag, counter, myMem.subList(lower, upper + 1)); 
-			boolean full = true; 
-
-			for (int i = 0; i < myCache.get(index).size(); i++){
-				Block sample = myCache.get(index).get(i);
-
-				if(!sample.validBit){
-					myCache.get(index).set(i, cacheNew);
-					full = false;
-					break; 
+			Block newBlock = new Block(true, tag, counter, myMem.subList(lower, upper + 1)); 
+			
+			boolean isFull = true;
+			int count = 0;
+			while (count < myCache.get(index).size()) {
+				Block checkBlock = myCache.get(index).get(count);
+				if (!checkBlock.validBit) {
+					isFull = false;
+					myCache.get(index).set(count, checkBlock);
+					break;
 				}
+				count ++; 
 			}
 
-			if (full) { // Write through 
+			if (isFull) { // Write through 
 				int indexMin = 0;
 				int currMin = Integer.MAX_VALUE; 
 				
@@ -218,7 +201,7 @@ public class cachesim{
 					}
 				}
 				
-				myCache.get(index).set(indexMin, cacheNew); 
+				myCache.get(index).set(indexMin, newBlock); 
 			}
 			return "store " + address + " miss"; 
 		}
@@ -313,6 +296,22 @@ public class cachesim{
 			}
 			return "load " + address + " miss " + value; 
 		}
+	}
+	
+	public static String offsetPad0() {
+		String out = "";
+		while (out.length() < offsetBits) {
+			out += "0"; 
+		}
+		return out; 
+	}
+	
+	public static String offsetPad1() {
+		String out = "";
+		while (out.length() < offsetBits) {
+			out += "1"; 
+		}
+		return out; 
 	}
 	
 	public List<Instruction> buildInstructions(String fileName) {
