@@ -1,6 +1,4 @@
-/**
- * Created by BrianLin on 4/10/16.
- */
+
 public class Instruction {
 
 	private String type; // store or load 
