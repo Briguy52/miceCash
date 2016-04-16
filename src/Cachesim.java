@@ -10,8 +10,8 @@ public class cachesim{
 	private static int indexBits;
 	private static int offsetBits; 
 
-	private static List<String> myMem;
 	private static Map<Integer, List<Block>> myCache;
+	private static List<String> myMem;
 
 	public cachesim (int size, int associativity, int numBlocks){
 		cacheSize = kbToByte(size); 
@@ -76,19 +76,16 @@ public class cachesim{
 	}
 
 	public static String processInstructions (Instruction instruction, int counter){
-
-		String type = instruction.getInstrType();
-
+		String type = instruction.type;
 		if (type.equals("store")) { return store(instruction, counter); }
 		else { return load(instruction, counter); }
-		
 	}
 
 	public static String store(Instruction instruction, int counter) {
 
-		String address = instruction.getAddress();
-		int numBytes = instruction.getNumBytes();
-		String writeValue = instruction.getWriteValue();
+		String address = instruction.address;
+		int numBytes = instruction.numBytes;
+		String writeValue = instruction.writeVal;
 
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
@@ -106,22 +103,19 @@ public class cachesim{
 			}
 			return "store " + address + " hit"; 
 		}
-
 		else{ // Store miss 
-
 			int lower = makeLower(address, tag); 
 			int upper = makeUpper(address, tag);
-
-			for (int i = 0; i< numBytes; i++){
-				int currentBinaryIndex = i * 2;
-				int nextBinaryIndex = (2 * i) + 2; 
-				myMem.set(lower + i, writeValue.substring(currentBinaryIndex, nextBinaryIndex));
+			int count = 0;
+			while (count < numBytes) { 
+				int currBinIndex = count * 2; 
+				int nextBinIndex = (2 * count) + 2; 
+				myMem.set(lower + count, writeValue.substring(currBinIndex, nextBinIndex));
+				count++; 
 			}
-
 			if (checkFull(index)) { // Write through 
 				myCache.get(index).set(getMinIndex(index), new Block(true, tag, counter, myMem.subList(lower, upper + 1))); 
 			}
-			
 			return "store " + address + " miss"; 
 		}
 	}
@@ -132,10 +126,7 @@ public class cachesim{
 		int minValue = Integer.MAX_VALUE; 
 		while (count < myCache.get(index).size()) {
 			int current = myCache.get(index).get(count).address; 
-			if (current < minValue) {
-				minValue = current;
-				minIndex = count;
-			}
+			if (current < minValue) { minValue = current; minIndex = count; }
 			count++; 
 		}
 		return minIndex; 
@@ -183,16 +174,16 @@ public class cachesim{
 	}
 
 	public static String load(Instruction instruction, int counter) {
-
-		String address = instruction.getAddress();
-		int numBytes = instruction.getNumBytes();
-
+		
+		String address = instruction.address;
+		int numBytes = instruction.numBytes;
+		
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
 		String tag = calcTag(address);
-
+		
 		int hitIndex = getHitIndex(index, tag); 
-
+		
 		if (didHit(index, tag)) {
 			String value = "";
 			int count = 0;
@@ -204,16 +195,11 @@ public class cachesim{
 			}
 			return "load " + address + " hit " + value; 
 		}
-
 		else { // Load miss 
-
 			int lower = makeLower(address, tag); 
 			int upper = makeUpper(address, tag);
-
 			Block newBlock = new Block(true, tag, counter, myMem.subList(lower,  upper + 1));
-
 			if (checkFull(index)) { myCache.get(index).set(getMinIndex(index), newBlock); }
-
 			String value = "";
 			int count = 0; 
 			while (count < numBytes) {
@@ -222,7 +208,6 @@ public class cachesim{
 				else { value += "00"; }
 				count++;
 			}
-			
 			return "load " + address + " miss " + value; 
 		}
 	}
@@ -256,7 +241,7 @@ public class cachesim{
 		return out; 
 	}
 
-	public List<Instruction> buildInstructions(String fileName) {
+	public static List<Instruction> buildInstructions(String fileName) {
 		List<Instruction> out = new ArrayList<Instruction>(); 
 		try {
 			Scanner scanner = new Scanner(new File(fileName));
@@ -318,9 +303,9 @@ public class cachesim{
 		int block = Integer.parseInt(test[3]); 
 
 		cachesim cs = new cachesim(size, asso, block); 
-		List<Instruction> myInstructions = cs.buildInstructions(fileName); 
+		List<Instruction> myInstructions = buildInstructions(fileName); 
 		for (int i=0; i<myInstructions.size(); i++) {
-			System.out.println(cs.processInstructions(myInstructions.get(i), i+1));
+			System.out.println(processInstructions(myInstructions.get(i), i+1));
 		}
 
 	}
