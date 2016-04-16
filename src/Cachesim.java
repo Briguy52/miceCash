@@ -3,6 +3,15 @@ import java.io.*;
 import java.math.*;
 
 public class cachesim{
+	
+	private static int cacheSize;
+	private static int numWays; 
+	private static int blockSize;
+	private static int indexBits;
+	private static int offsetBits; 
+
+	private static List<String> myMem;
+	private static HashMap<Integer, List<Block>> myCache;
 
 	private static class Block {
 		boolean validBit;
@@ -18,15 +27,7 @@ public class cachesim{
 			myValue = d; 
 		}
 	}
-
-	private static int cacheSize;
-	private static int numWays; 
-	private static int blockSize;
-	private static int indexBits;
-	private static int offsetBits; 
-
-	private static List<String> myMem;
-	private static HashMap<Integer, List<Block>> myCache; 
+ 
 
 	//Constructor for the cache
 	public cachesim (int size, int associativity, int blocks){
@@ -77,18 +78,22 @@ public class cachesim{
 		return Integer.toBinaryString(Integer.parseInt(hex.substring(2), 16));
 	}
 
-	//Calculate the index of a given memory address
 	public static int calcIndex (String address){
 		//If index is size 0;
 		indexBits = (int) logBase2(myCache.size());
 		if(indexBits == 0){
 			return indexBits;
 		}
-
 		String binaryString = parseAddress(address); 
-
-		// TODO: refactor 
-		return Integer.parseInt(binaryString.substring(binaryString.length() - offsetBits - indexBits, binaryString.length() - offsetBits) , 2); 
+		return Integer.parseInt(binaryString.substring(getIndexStart(binaryString), getIndexEnd(binaryString)) , 2); 
+	}
+	
+	public static int getIndexStart(String binaryString) {
+		return binaryString.length() - offsetBits - indexBits;
+	}
+	
+	public static int getIndexEnd(String binaryString) {
+		return binaryString.length() - offsetBits; 
 	}
 
 	public static String padString(String toPad, int desiredLength) {
@@ -106,13 +111,13 @@ public class cachesim{
 
 	public static String calcTag (String address){
 		String binaryString = parseAddress(address); 
-		return binaryString.substring(0, binaryString.length() - offsetBits - indexBits); 
+		return binaryString.substring(0, getIndexStart(binaryString)); 
 	}
 
 	public static int calcOffset (String address){
 		offsetBits = (int) logBase2(blockSize); 
 		String binaryString = parseAddress(address);
-		return Integer.parseInt(binaryString.substring(binaryString.length() - offsetBits, binaryString.length()), 2); 
+		return Integer.parseInt(binaryString.substring(getIndexEnd(binaryString), binaryString.length()), 2); 
 	}
 
 	public static String instructionProcess (Instruction instruction, int counter){
@@ -128,6 +133,22 @@ public class cachesim{
 		}
 	}
 	
+	public static String offsetPad0() {
+		String out = "";
+		while (out.length() < offsetBits) {
+			out += "0"; 
+		}
+		return out; 
+	}
+	
+	public static String offsetPad1() {
+		String out = "";
+		while (out.length() < offsetBits) {
+			out += "1"; 
+		}
+		return out; 
+	}
+	
 	public static String store(Instruction instruction, int counter) {
 		
 		String address = instruction.getAddress();
@@ -137,18 +158,6 @@ public class cachesim{
 		int offset = calcOffset(address);
 		int index = calcIndex(address); 
 		String tag = calcTag(address);
-
-//		boolean hit = false; 
-//		int hitIndex = 0; 
-//
-//		for (int i = 0; i < myCache.get(index).size(); i++){
-//			Block sample = myCache.get(index).get(i); 
-//			if (sample.tag.equals(tag)) { //Match 
-//				hit = true; 
-//				hitIndex = i;
-//				break; 
-//			}
-//		}
 		
 		boolean hit = false; 
 		int hitIndex = 0; 
@@ -162,31 +171,20 @@ public class cachesim{
 		}
 
 		if (hit){
+			// Loop through and Store writeValue at the desired location 
 			for (int i = 0; i < numBytes; i++){
+				// TODO: refactor 
 				myCache.get(index).get(hitIndex).myValue.set(offset + i, writeValue.substring(index, i+2)); 
 			}
-//			myCache.get(index).get(hitIndex).dirtyBit = true; 
-			return "split" + " " + address + " hit"; 
+			return "store " + address + " hit"; 
 		}
 
-		else{
-			String s0 = "";
-			String s1 = "";
-
-			for(int i = 0; i < offsetBits; i++){
-				s0 += "0";
-				s1 += "1"; 
-			}
-
+		else{ // Miss 
 			String binaryString = parseAddress(address); 
-
-			String indexString = binaryString.substring(binaryString.length() - offsetBits - indexBits, binaryString.length() - offsetBits);
-
-			String binaryAdd1 = tag + indexString + s0; 
-			String binaryAdd2 = tag + indexString + s1; 
-
-			int lower = Integer.parseInt(binaryAdd1, 2);
-			int upper = Integer.parseInt(binaryAdd2, 2); 
+			String indexString = binaryString.substring(getIndexStart(binaryString), getIndexEnd(binaryString));
+			
+			int lower = Integer.parseInt(tag + indexString + offsetPad0(), 2); 
+			int upper = Integer.parseInt(tag + indexString + offsetPad1(), 2); 
 
 			for (int i = 0; i< numBytes; i++){
 				int currentBinaryIndex = i * 2;
@@ -210,19 +208,16 @@ public class cachesim{
 
 			if (full) { // Write through 
 				int indexMin = 0;
-				int absMin = Integer.MAX_VALUE; 
-
+				int currMin = Integer.MAX_VALUE; 
+				
+				// Find min for LRU 
 				for(int i = 0; i < myCache.get(index).size(); i++){
-					if (myCache.get(index).get(i).address < absMin){
-						absMin = myCache.get(index).get(i).address;
+					if (myCache.get(index).get(i).address < currMin){
+						currMin = myCache.get(index).get(i).address;
 						indexMin = i; 
 					}
 				}
-//				if (myCache.get(index).get(indexMin).dirtyBit){
-//					for (int i = lower; i <= upper; i++){
-//						myMem.set(i, myCache.get(index).get(indexMin).myValue.get(i-lower)); 
-//					}
-//				}
+				
 				myCache.get(index).set(indexMin, cacheNew); 
 			}
 			return "store " + address + " miss"; 
